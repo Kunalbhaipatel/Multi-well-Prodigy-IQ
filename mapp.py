@@ -72,7 +72,7 @@ with tabs[0]:
 
 # ---------- TAB 2 ----------
 with tabs[1]:
-    st.markdown("### 📌 Summary & Charts")
+    st.markdown("### 📌 Summary & Charts", help="Includes Depth vs DOW, Dilution Breakdown, and DSRE trends")
     subset = filtered.dropna(subset=["Well_Name"])
     chart1, chart2 = st.columns(2)
     with chart1:
@@ -81,9 +81,11 @@ with tabs[1]:
             st.plotly_chart(fig1, use_container_width=True)
     with chart2:
         y_cols = [col for col in ["Base_Oil", "Water", "Weight_Material", "Chemicals"] if col in subset.columns]
-        if y_cols:
+        if y_cols and not subset[y_cols].dropna(how="all").empty:
             fig2 = px.bar(subset, x="Well_Name", y=y_cols, barmode="stack", height=400)
             st.plotly_chart(fig2, use_container_width=True)
+        else:
+            st.warning("No data available in Base_Oil / Water / Chemicals / Weight_Material.")
 
 # ---------- TAB 3 ----------
 with tabs[2]:
