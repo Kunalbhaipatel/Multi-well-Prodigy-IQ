@@ -88,22 +88,26 @@ with tabs[5]:
             lgs_min, lgs_max = float(data["Average_LGS%"].min()), float(data["Average_LGS%"].max())
             lgs_range = st.slider("Average LGS%", lgs_min, lgs_max, (lgs_min, lgs_max))
             filtered = filtered[(filtered["Average_LGS%"] >= lgs_range[0]) & (filtered["Average_LGS%"] <= lgs_range[1])]
-        if "TD_Date" in data.columns:
-            
-data["TD_Date"] = pd.to_datetime(data["TD_Date"], errors='coerce')
-data["TD_Year"] = data["TD_Date"].dt.year
-data["TD_Month"] = data["TD_Date"].dt.month
+        
+if "TD_Date" in data.columns and not data["TD_Date"].isnull().all():
+    try:
+        data["TD_Date"] = pd.to_datetime(data["TD_Date"], errors='coerce')
+        data["TD_Year"] = data["TD_Date"].dt.year
+        data["TD_Month"] = data["TD_Date"].dt.month
 
-td_years = sorted(data["TD_Year"].dropna().unique())
-td_months = sorted(data["TD_Month"].dropna().unique())
+        td_years = sorted(data["TD_Year"].dropna().unique())
+        td_months = sorted(data["TD_Month"].dropna().unique())
 
-selected_year = st.selectbox("Select TD Year", options=["All"] + [int(y) for y in td_years])
-selected_month = st.selectbox("Select TD Month", options=["All"] + [int(m) for m in td_months])
+        selected_year = st.selectbox("Select TD Year", options=["All"] + [int(y) for y in td_years])
+        selected_month = st.selectbox("Select TD Month", options=["All"] + [int(m) for m in td_months])
 
-if selected_year != "All":
-    filtered = filtered[filtered["TD_Year"] == selected_year]
-if selected_month != "All":
-    filtered = filtered[filtered["TD_Month"] == selected_month]
+        if selected_year != "All":
+            filtered = filtered[filtered["TD_Year"] == selected_year]
+        if selected_month != "All":
+            filtered = filtered[filtered["TD_Month"] == selected_month]
+    except Exception as e:
+        st.warning(f"⚠️ TD_Date processing failed: {e}")
+
 
             td_min, td_max = data["TD_Date"].min(), data["TD_Date"].max()
             td_range = st.date_input("TD Date Range", (td_min, td_max))
