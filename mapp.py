@@ -13,10 +13,33 @@ data = pd.read_csv(default_path)
 if "Efficiency Score" in data.columns and data["Efficiency Score"].isnull().all():
     data.drop(columns=["Efficiency Score"], inplace=True)
 
-# ---------- GLOBAL SEARCH ----------
+# ---------- GLOBAL SEARCH & FILTER BAR ----------
 with st.container():
-    st.markdown("### 🔍 Global Search")
-    search_term = st.text_input("Type any keyword (well, state, date, value...) to search all columns:")
+    col_search, col1, col2, col3, col4 = st.columns([2.5, 1.2, 1.2, 1.2, 1.2])
+    with col_search:
+        st.markdown("🔍 **Global Search**")
+        search_term = st.text_input("Search any column...")
+        reset_filters = st.button("🔄 Reset All Filters")
+        if reset_filters:
+            st.experimental_rerun()
+        if search_term:
+            search_term = search_term.lower()
+            data = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
+            st.success(f"🔎 Found {len(data)} matching rows.")
+    with col1:
+        selected_operator = st.selectbox("Operator", ["All"] + sorted(data["Operator"].dropna().unique().tolist()))
+    with col2:
+        filtered_by_op = data if selected_operator == "All" else data[data["Operator"] == selected_operator]
+        selected_contractor = st.selectbox("Contractor", ["All"] + sorted(filtered_by_op["Contractor"].dropna().unique().tolist()))
+    with col3:
+        filtered_by_contractor = filtered_by_op if selected_contractor == "All" else filtered_by_op[filtered_by_op["Contractor"] == selected_contractor]
+        selected_shaker = st.selectbox("Shaker", ["All"] + sorted(filtered_by_contractor["flowline_Shakers"].dropna().unique().tolist()))
+    with col4:
+        filtered_by_shaker = filtered_by_contractor if selected_shaker == "All" else filtered_by_contractor[filtered_by_contractor["flowline_Shakers"] == selected_shaker]
+        selected_hole = st.selectbox("Hole Size", ["All"] + sorted(filtered_by_shaker["Hole_Size"].dropna().unique().tolist()))
+
+    filtered = filtered_by_shaker if selected_hole == "All" else filtered_by_shaker[filtered_by_shaker["Hole_Size"] == selected_hole]
+
     reset_filters = st.button("🔄 Reset All Filters")
     if reset_filters:
         st.experimental_rerun()
@@ -116,7 +139,6 @@ st.markdown("""
     &copy; 2025 Derrick Corp | Designed for drilling performance insights
 </div>
 """, unsafe_allow_html=True)
-
 
 # ---------- TAB 1: WELL OVERVIEW ----------
 with tabs[0]:
