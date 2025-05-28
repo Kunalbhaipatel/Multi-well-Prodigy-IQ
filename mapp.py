@@ -123,6 +123,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+
 # ---------- TAB 1: WELL OVERVIEW ----------
 with tabs[0]:
     st.subheader("📄 Well Overview")
