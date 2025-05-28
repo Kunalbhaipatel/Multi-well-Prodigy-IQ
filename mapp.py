@@ -19,7 +19,7 @@ with st.container():
     with col_search:
         st.markdown("🔍 **Global Search**")
         search_term = st.text_input("Search any column...")
-        reset_filters = st.button("🔄 Reset All Filters", key="reset_button")
+        reset_filters = st.button("🔄 Reset All Filters", key="reset_all_filters_unique")
         if reset_filters:
             st.experimental_rerun()
         if search_term:
@@ -40,7 +40,7 @@ with st.container():
 
     filtered = filtered_by_shaker if selected_hole == "All" else filtered_by_shaker[filtered_by_shaker["Hole_Size"] == selected_hole]
 
-    reset_filters = st.button("🔄 Reset All Filters", key="reset_button")
+    reset_filters = st.button("🔄 Reset All Filters", key="reset_all_filters_unique")
     if reset_filters:
         st.experimental_rerun()
 
@@ -139,6 +139,7 @@ st.markdown("""
     &copy; 2025 Derrick Corp | Designed for drilling performance insights
 </div>
 """, unsafe_allow_html=True)
+
 
 # ---------- TAB 1: WELL OVERVIEW ----------
 with tabs[0]:
