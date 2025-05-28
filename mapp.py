@@ -1,98 +1,13 @@
 
 import pandas as pd
+import pandas as pd
 import streamlit as st
-import plotly.express as px
-import pydeck as pdk
-import os
 
-st.set_page_config(layout="wide", page_title="Rig Comparison Dashboard", page_icon="📊")
+st.title("Rig Comparison Dashboard")
 
-# ---------- Styling ----------
-st.markdown("""
-<style>
-body { background-color: #f5f7fa; }
-h1 {
-  font-size: 2.4rem;
-  font-weight: 700;
-  color: #004578;
-}
-[data-testid="stMetric"] {
-  background-color: #ffffff;
-  border: 1px solid #d0d6dd;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  text-align: center;
-}
-.stButton button {
-  background-color: #0078d4;
-  color: white;
-  font-weight: bold;
-  border-radius: 8px;
-  padding: 0.4rem 1rem;
-  border: none;
-  margin-top: 1.6rem;
-}
-.stButton button:hover {
-  background-color: #005ea2;
-}
-.stTabs [data-baseweb="tab"] {
-  font-size: 1rem;
-  padding: 10px;
-  border-radius: 8px 8px 0 0;
-  background-color: #eaf1fb;
-  color: #004578;
-  margin-right: 0.5rem;
-}
-.stTabs [aria-selected="true"] {
-  background-color: #0078d4 !important;
-  color: white !important;
-  font-weight: bold;
-}
-.stDataFrame {
-  border-radius: 12px;
-  border: 1px solid #d0d6dd;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ---------- Full-width Jet Black Header ----------
-st.markdown("""
-<style>
-.full-header {
-    position: relative;
-    left: 0;
-    top: 0;
-    width: 100%;
-    background-color: #1c1c1c;
-    color: white;
-    padding: 1rem 2rem;
-    margin-bottom: 1rem;
-    border-radius: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 999;
-}
-.full-header h2 {
-    margin: 0;
-    font-size: 1.8rem;
-}
-</style>
-
-<div class='full-header'>
-    <div style='display: flex; align-items: center;'>
-        <img src='https://img.icons8.com/color/48/dashboard-layout.png' style='margin-right: 12px;'/>
-        <h2>Rig Comparison Dashboard</h2>
-    </div>
-    <div style='font-size: 0.9rem;'>Powered by ProdigyIQ</div>
-</div>
-""", unsafe_allow_html=True)
-
-# ---------- Load Data ----------
-default_path = os.path.join(os.path.dirname(__file__), "Updated_Merged_Data_with_API_and_Location.csv")
+default_path = "Updated_Merged_Data_with_API_and_Location.csv"
 data = pd.read_csv(default_path)
+
 if "Efficiency Score" in data.columns and data["Efficiency Score"].isnull().all():
     data.drop(columns=["Efficiency Score"], inplace=True)
 
@@ -431,3 +346,16 @@ This section compares **shaker performance** across rig setups:
             st.info("ℹ️ Please select at least one metric to compare.")
     else:
         st.warning("⚠️ 'flowline_Shakers' column not found in dataset.")
+
+
+
+# Dynamic search box (case-insensitive, searches across all columns)
+search_query = st.text_input("Search anywhere in the dataset:")
+
+if search_query:
+    search_query_lower = search_query.lower()
+    filtered_data = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_query_lower).any(), axis=1)]
+    st.write(f"Search results for: **{search_query}**")
+    st.dataframe(filtered_data)
+else:
+    st.dataframe(data)
