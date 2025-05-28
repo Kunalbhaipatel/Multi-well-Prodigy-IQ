@@ -119,13 +119,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- FOOTER ----------
-st.markdown("""
-<div style='position: fixed; left: 0; bottom: 0; width: 100%; background-color: #1c1c1c; color: white; text-align: center; padding: 8px 0; font-size: 0.9rem; z-index: 999;'>
-    &copy; 2025 Derrick Corp | Designed for drilling performance insights
-</div>
-""", unsafe_allow_html=True)
-
 # ---------- TAB 1: WELL OVERVIEW ----------
 with tabs[0]:
     st.subheader("📄 Well Overview")
