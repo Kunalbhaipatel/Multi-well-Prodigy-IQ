@@ -1,98 +1,12 @@
 
 import pandas as pd
 import streamlit as st
-import plotly.express as px
-import pydeck as pdk
-import os
 
-st.set_page_config(layout="wide", page_title="Rig Comparison Dashboard", page_icon="📊")
+st.title("Rig Comparison Dashboard")
 
-# ---------- Styling ----------
-st.markdown("""
-<style>
-body { background-color: #f5f7fa; }
-h1 {
-  font-size: 2.4rem;
-  font-weight: 700;
-  color: #004578;
-}
-[data-testid="stMetric"] {
-  background-color: #ffffff;
-  border: 1px solid #d0d6dd;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  text-align: center;
-}
-.stButton button {
-  background-color: #0078d4;
-  color: white;
-  font-weight: bold;
-  border-radius: 8px;
-  padding: 0.4rem 1rem;
-  border: none;
-  margin-top: 1.6rem;
-}
-.stButton button:hover {
-  background-color: #005ea2;
-}
-.stTabs [data-baseweb="tab"] {
-  font-size: 1rem;
-  padding: 10px;
-  border-radius: 8px 8px 0 0;
-  background-color: #eaf1fb;
-  color: #004578;
-  margin-right: 0.5rem;
-}
-.stTabs [aria-selected="true"] {
-  background-color: #0078d4 !important;
-  color: white !important;
-  font-weight: bold;
-}
-.stDataFrame {
-  border-radius: 12px;
-  border: 1px solid #d0d6dd;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ---------- Full-width Jet Black Header ----------
-st.markdown("""
-<style>
-.full-header {
-    position: relative;
-    left: 0;
-    top: 0;
-    width: 100%;
-    background-color: #1c1c1c;
-    color: white;
-    padding: 1rem 2rem;
-    margin-bottom: 1rem;
-    border-radius: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 999;
-}
-.full-header h2 {
-    margin: 0;
-    font-size: 1.8rem;
-}
-</style>
-
-<div class='full-header'>
-    <div style='display: flex; align-items: center;'>
-        <img src='https://img.icons8.com/color/48/dashboard-layout.png' style='margin-right: 12px;'/>
-        <h2>Rig Comparison Dashboard</h2>
-    </div>
-    <div style='font-size: 0.9rem;'>Powered by ProdigyIQ</div>
-</div>
-""", unsafe_allow_html=True)
-
-# ---------- Load Data ----------
-default_path = os.path.join(os.path.dirname(__file__), "Updated_Merged_Data_with_API_and_Location.csv")
+default_path = "Updated_Merged_Data_with_API_and_Location.csv"
 data = pd.read_csv(default_path)
+
 if "Efficiency Score" in data.columns and data["Efficiency Score"].isnull().all():
     data.drop(columns=["Efficiency Score"], inplace=True)
 
@@ -109,6 +23,17 @@ st.markdown("Use filters to explore well-level, shaker-type, and fluid performan
 # Placeholder: You can now paste the full app logic (filters, tabs, charts, metrics...)
 # and insert the previously generated tooltips inside each tab as needed.
 # Filters
+
+# ---------- GLOBAL SEARCH ----------
+st.markdown("### 🔎 Global Search")
+search_term = st.text_input("Search all columns for keyword:")
+if search_term:
+    search_term = search_term.lower()
+    filtered = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
+    st.success(f"Found {len(filtered)} matching rows.")
+else:
+    filtered = data
+
 with st.container():
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -140,50 +65,25 @@ tabs = st.tabs(["🧾 Well Overview", "📋 Summary & Charts", "📊 Statistical
 
 
 
+
 # ---------- TAB 1: WELL OVERVIEW ----------
 with tabs[0]:
     st.subheader("📄 Well Overview")
     st.markdown("Analyze well-level performance metrics as grouped column bar charts.")
 
-    available_metrics = ["DSRE", "Total_SCE", "Total_Dil", "ROP", "Temp", "DOW", "AMW", 
-                         "Drilling_Hours", "Haul_OFF", "Base_Oil", "Water", "Weight_Material"]
+    selected_metric = st.selectbox("Choose a metric to visualize", ["Total_Dil", "Total_SCE", "DSRE"])
 
-    selected_metric = st.selectbox("Choose a metric to visualize", available_metrics)
+    # Prepare data for visualization
+    metric_data = filtered[["Well_Name", selected_metric]].dropna()
+    metric_data = metric_data.groupby("Well_Name")[selected_metric].mean().reset_index()
+    metric_data.rename(columns={selected_metric: "Value"}, inplace=True)
 
-    if "Metric" in data.columns and "Value" in data.columns:
-        metric_data = data[data["Metric"] == selected_metric]
-    else:
-        metric_data = pd.melt(
-            data,
-            id_vars=["Well_Name"],
-            value_vars=[col for col in available_metrics if col in data.columns],
-            var_name="Metric",
-            value_name="Value"
-        )
-        metric_data = metric_data[metric_data["Metric"] == selected_metric]
-
+    import plotly.express as px
     fig = px.bar(metric_data, x="Well_Name", y="Value", title=f"Well Name vs {selected_metric}")
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("### 🧾 Well-Level Overview")
-    numeric_cols = [
-        "DSRE", "Discard Ratio", "Total_SCE", "Total_Dil", "ROP", "Temp", "DOW", "AMW",
-        "Drilling_Hours", "Haul_OFF", "Base_Oil", "Water", "Weight_Material",
-        "Chemicals", "Dilution_Ratio", "Solids_Generated"
-    ]
 
-    available_cols = [col for col in numeric_cols if col in filtered.columns]
-    melted_df = filtered[["Well_Name"] + available_cols].melt(id_vars="Well_Name", var_name="Metric", value_name="Value")
-
-    if not melted_df.empty:
-        fig2 = px.bar(melted_df, x="Well_Name", y="Value", color="Metric", barmode="group",
-                      title="Well Name vs Key Metrics", height=600)
-        st.plotly_chart(fig2, use_container_width=True)
-    else:
-        st.warning("No valid numeric data found for chart.")
-
-
-# ---------- TAB 2: SUMMARY + CHARTS ----------
+# ---------- TAB 2: SUMMARY & CHARTS ----------
 with tabs[1]:
     st.markdown("### 📌 Summary & Charts")
 
