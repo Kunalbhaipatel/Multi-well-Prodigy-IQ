@@ -23,10 +23,9 @@ with st.container():
 
     if search_term:
         search_term = search_term.lower()
-        filtered = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
-        st.success(f"🔎 Showing {len(filtered)} matching records")
-    else:
-        filtered = data
+        data = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
+        st.success(f"🔎 Found {len(data)} matching rows.")
+    filtered = data
 
 # ---------- FILTER BAR ----------
 with st.container():
@@ -117,7 +116,6 @@ st.markdown("""
     &copy; 2025 Derrick Corp | Designed for drilling performance insights
 </div>
 """, unsafe_allow_html=True)
-
 
 
 # ---------- TAB 1: WELL OVERVIEW ----------
