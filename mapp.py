@@ -17,7 +17,12 @@ if "Efficiency Score" in data.columns and data["Efficiency Score"].isnull().all(
 # ---------- GLOBAL SEARCH ----------
 with st.container():
     st.markdown("### 🔍 Global Search")
-    search_term = st.text_input("Type any keyword (well, state, date, value...) to search all columns:")
+    
+search_term = st.text_input("Type any keyword (well, state, date, value...) to search all columns:")
+reset_filters = st.button("🔄 Reset All Filters")
+if reset_filters:
+    st.experimental_rerun()
+
     if search_term:
         search_term = search_term.lower()
         filtered = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
@@ -84,7 +89,22 @@ with tabs[5]:
             lgs_range = st.slider("Average LGS%", lgs_min, lgs_max, (lgs_min, lgs_max))
             filtered = filtered[(filtered["Average_LGS%"] >= lgs_range[0]) & (filtered["Average_LGS%"] <= lgs_range[1])]
         if "TD_Date" in data.columns:
-            data["TD_Date"] = pd.to_datetime(data["TD_Date"], errors='coerce')
+            
+data["TD_Date"] = pd.to_datetime(data["TD_Date"], errors='coerce')
+data["TD_Year"] = data["TD_Date"].dt.year
+data["TD_Month"] = data["TD_Date"].dt.month
+
+td_years = sorted(data["TD_Year"].dropna().unique())
+td_months = sorted(data["TD_Month"].dropna().unique())
+
+selected_year = st.selectbox("Select TD Year", options=["All"] + [int(y) for y in td_years])
+selected_month = st.selectbox("Select TD Month", options=["All"] + [int(m) for m in td_months])
+
+if selected_year != "All":
+    filtered = filtered[filtered["TD_Year"] == selected_year]
+if selected_month != "All":
+    filtered = filtered[filtered["TD_Month"] == selected_month]
+
             td_min, td_max = data["TD_Date"].min(), data["TD_Date"].max()
             td_range = st.date_input("TD Date Range", (td_min, td_max))
             filtered = filtered[(data["TD_Date"] >= pd.to_datetime(td_range[0])) & (data["TD_Date"] <= pd.to_datetime(td_range[1]))]
