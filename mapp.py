@@ -349,13 +349,19 @@ This section compares **shaker performance** across rig setups:
 
 
 
-# Dynamic search box (case-insensitive, searches across all columns)
-search_query = st.text_input("Search anywhere in the dataset:")
+# Global Search Functionality
+st.subheader("🔍 Global Search")
+search_term = st.text_input("Enter keyword to search across all columns:")
 
-if search_query:
-    search_query_lower = search_query.lower()
-    filtered_data = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_query_lower).any(), axis=1)]
-    st.write(f"Search results for: **{search_query}**")
+if search_term:
+    # Convert search term to lowercase
+    search_term = search_term.lower()
+
+    # Filter dataset based on whether any column contains the search term
+    mask = data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)
+    filtered_data = data[mask]
+
+    st.success(f"Displaying {len(filtered_data)} result(s) matching '{search_term}'")
     st.dataframe(filtered_data)
 else:
     st.dataframe(data)
