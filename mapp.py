@@ -25,6 +25,17 @@ st.markdown("Use filters to explore well-level, shaker-type, and fluid performan
 # Filters
 
 # ---------- GLOBAL SEARCH ----------
+st.markdown("### 🔍 Global Search")
+search_term = st.text_input("Search all columns for keyword:")
+if search_term:
+    search_term = search_term.lower()
+    filtered = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
+    st.success(f"Found {len(filtered)} matching rows.")
+else:
+    filtered = data
+
+
+# ---------- GLOBAL SEARCH ----------
 st.markdown("### 🔎 Global Search")
 search_term = st.text_input("Search all columns for keyword:")
 if search_term:
