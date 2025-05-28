@@ -40,7 +40,7 @@ with st.container():
 
     filtered = filtered_by_shaker if selected_hole == "All" else filtered_by_shaker[filtered_by_shaker["Hole_Size"] == selected_hole]
 
-    reset_filters = st.button("🔄 Reset All Filters")
+    reset_filters = st.button("🔄 Reset All Filters", key="reset_button")
     if reset_filters:
         st.experimental_rerun()
 
