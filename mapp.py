@@ -65,50 +65,25 @@ tabs = st.tabs(["🧾 Well Overview", "📋 Summary & Charts", "📊 Statistical
 
 
 
+
 # ---------- TAB 1: WELL OVERVIEW ----------
 with tabs[0]:
     st.subheader("📄 Well Overview")
     st.markdown("Analyze well-level performance metrics as grouped column bar charts.")
 
-    available_metrics = ["DSRE", "Total_SCE", "Total_Dil", "ROP", "Temp", "DOW", "AMW", 
-                         "Drilling_Hours", "Haul_OFF", "Base_Oil", "Water", "Weight_Material"]
+    selected_metric = st.selectbox("Choose a metric to visualize", ["Total_Dil", "Total_SCE", "DSRE"])
 
-    selected_metric = st.selectbox("Choose a metric to visualize", available_metrics)
+    # Prepare data for visualization
+    metric_data = filtered[["Well_Name", selected_metric]].dropna()
+    metric_data = metric_data.groupby("Well_Name")[selected_metric].mean().reset_index()
+    metric_data.rename(columns={selected_metric: "Value"}, inplace=True)
 
-    if "Metric" in data.columns and "Value" in data.columns:
-        metric_data = data[data["Metric"] == selected_metric]
-    else:
-        metric_data = pd.melt(
-            data,
-            id_vars=["Well_Name"],
-            value_vars=[col for col in available_metrics if col in data.columns],
-            var_name="Metric",
-            value_name="Value"
-        )
-        metric_data = metric_data[metric_data["Metric"] == selected_metric]
-
+    import plotly.express as px
     fig = px.bar(metric_data, x="Well_Name", y="Value", title=f"Well Name vs {selected_metric}")
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("### 🧾 Well-Level Overview")
-    numeric_cols = [
-        "DSRE", "Discard Ratio", "Total_SCE", "Total_Dil", "ROP", "Temp", "DOW", "AMW",
-        "Drilling_Hours", "Haul_OFF", "Base_Oil", "Water", "Weight_Material",
-        "Chemicals", "Dilution_Ratio", "Solids_Generated"
-    ]
 
-    available_cols = [col for col in numeric_cols if col in filtered.columns]
-    melted_df = filtered[["Well_Name"] + available_cols].melt(id_vars="Well_Name", var_name="Metric", value_name="Value")
-
-    if not melted_df.empty:
-        fig2 = px.bar(melted_df, x="Well_Name", y="Value", color="Metric", barmode="group",
-                      title="Well Name vs Key Metrics", height=600)
-        st.plotly_chart(fig2, use_container_width=True)
-    else:
-        st.warning("No valid numeric data found for chart.")
-
-
-# ---------- TAB 2: SUMMARY + CHARTS ----------
+# ---------- TAB 2: SUMMARY & CHARTS ----------
 with tabs[1]:
     st.markdown("### 📌 Summary & Charts")
 
