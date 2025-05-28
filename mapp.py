@@ -19,7 +19,7 @@ with st.container():
     with col_search:
         st.markdown("🔍 **Global Search**")
         search_term = st.text_input("Search any column...")
-        reset_filters = st.button("🔄 Reset All Filters")
+        reset_filters = st.button("🔄 Reset All Filters", key="reset_button")
         if reset_filters:
             st.experimental_rerun()
         if search_term:
