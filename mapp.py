@@ -10,6 +10,52 @@ data = pd.read_csv(default_path)
 if "Efficiency Score" in data.columns and data["Efficiency Score"].isnull().all():
     data.drop(columns=["Efficiency Score"], inplace=True)
 
+# ---------- GLOBAL SEARCH ----------
+st.markdown("### 🔍 Global Search")
+search_term = st.text_input("Search all columns for keyword:")
+if search_term:
+    search_term = search_term.lower()
+    filtered = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
+    st.success(f"Found {len(filtered)} matching rows.")
+else:
+    filtered = data
+
+# ---------- TABS ----------
+tabs = st.tabs(["🧾 Well Overview", "📋 Summary & Charts", "📊 Statistical Insights", "📈 Advanced Analytics", "🧮 Multi-Well Comparison", "⚙️ Advanced Tab"])
+
+# ---------- TAB 6: ADVANCED FILTERS ----------
+with tabs[5]:
+    with st.expander("📌 Use advanced filters to refine your dataset", expanded=True):
+        st.markdown("### 🧮 Advanced Filters")
+
+        # Range sliders with valid checks
+        col1, col2 = st.columns(2)
+        with col1:
+            if "IntLength" in data.columns:
+                min_val, max_val = int(data["IntLength"].min()), int(data["IntLength"].max())
+                int_range = st.slider("Interval Length", min_val, max_val, (min_val, max_val))
+                filtered = filtered[(filtered["IntLength"] >= int_range[0]) & (filtered["IntLength"] <= int_range[1])]
+
+            if "AMW" in data.columns:
+                min_amw, max_amw = float(data["AMW"].min()), float(data["AMW"].max())
+                amw_range = st.slider("Average Mud Weight (AMW)", min_amw, max_amw, (min_amw, max_amw))
+                filtered = filtered[(filtered["AMW"] >= amw_range[0]) & (filtered["AMW"] <= amw_range[1])]
+
+        with col2:
+            if "Average_LGS%" in data.columns:
+                lgs_min, lgs_max = float(data["Average_LGS%"].min()), float(data["Average_LGS%"].max())
+                lgs_range = st.slider("Average LGS%", lgs_min, lgs_max, (lgs_min, lgs_max))
+                filtered = filtered[(filtered["Average_LGS%"] >= lgs_range[0]) & (filtered["Average_LGS%"] <= lgs_range[1])]
+
+            if "TD_Date" in data.columns:
+                data["TD_Date"] = pd.to_datetime(data["TD_Date"], errors='coerce')
+                td_min, td_max = data["TD_Date"].min(), data["TD_Date"].max()
+                td_range = st.date_input("TD Date Range", (td_min, td_max))
+                filtered = filtered[(data["TD_Date"] >= pd.to_datetime(td_range[0])) & (data["TD_Date"] <= pd.to_datetime(td_range[1]))]
+
+        st.markdown("Filtered results after applying advanced filters:")
+        st.dataframe(filtered)
+
 # ---------- Jet Black Footer ----------
 st.markdown("""
 <div style='position: fixed; left: 0; bottom: 0; width: 100%; background-color: #1c1c1c; color: white; text-align: center; padding: 8px 0; font-size: 0.9rem; z-index: 999;'>
