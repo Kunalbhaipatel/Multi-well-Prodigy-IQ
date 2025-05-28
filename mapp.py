@@ -1,3 +1,4 @@
+
 import pandas as pd
 import streamlit as st
 
@@ -22,6 +23,17 @@ st.markdown("Use filters to explore well-level, shaker-type, and fluid performan
 # Placeholder: You can now paste the full app logic (filters, tabs, charts, metrics...)
 # and insert the previously generated tooltips inside each tab as needed.
 # Filters
+
+# ---------- GLOBAL SEARCH ----------
+st.markdown("### 🔎 Global Search")
+search_term = st.text_input("Search all columns for keyword:")
+if search_term:
+    search_term = search_term.lower()
+    filtered = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
+    st.success(f"Found {len(filtered)} matching rows.")
+else:
+    filtered = data
+
 with st.container():
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -344,16 +356,3 @@ This section compares **shaker performance** across rig setups:
             st.info("ℹ️ Please select at least one metric to compare.")
     else:
         st.warning("⚠️ 'flowline_Shakers' column not found in dataset.")
-
-
-
-# Dynamic search box (case-insensitive, searches across all columns)
-search_query = st.text_input("Search anywhere in the dataset:")
-
-if search_query:
-    search_query_lower = search_query.lower()
-    filtered_data = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_query_lower).any(), axis=1)]
-    st.write(f"Search results for: **{search_query}**")
-    st.dataframe(filtered_data)
-else:
-    st.dataframe(data)
