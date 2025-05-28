@@ -93,13 +93,14 @@ if "TD_Date" in data.columns and not data["TD_Date"].isnull().all():
     try:
         data["TD_Date"] = pd.to_datetime(data["TD_Date"], errors='coerce')
         data["TD_Year"] = data["TD_Date"].dt.year
-        data["TD_Month"] = data["TD_Date"].dt.month
+        data["TD_Month"] = data["TD_Date"].dt.strftime('%B')  # full month names
 
         td_years = sorted(data["TD_Year"].dropna().unique())
-        td_months = sorted(data["TD_Month"].dropna().unique())
+        td_months = ["January", "February", "March", "April", "May", "June",
+                     "July", "August", "September", "October", "November", "December"]
 
         selected_year = st.selectbox("Select TD Year", options=["All"] + [int(y) for y in td_years])
-        selected_month = st.selectbox("Select TD Month", options=["All"] + [int(m) for m in td_months])
+        selected_month = st.selectbox("Select TD Month", options=["All"] + td_months)
 
         if selected_year != "All":
             filtered = filtered[filtered["TD_Year"] == selected_year]
