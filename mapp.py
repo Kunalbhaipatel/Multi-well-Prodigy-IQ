@@ -3,8 +3,11 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-st.title("Rig Comparison Dashboard")
+# ---------- TITLE ----------
+st.set_page_config(page_title="Rig Comparison Dashboard", layout="wide")
+st.title("🚀 Rig Comparison Dashboard")
 
+# ---------- LOAD DATA ----------
 default_path = "Updated_Merged_Data_with_API_and_Location.csv"
 data = pd.read_csv(default_path)
 
@@ -12,34 +15,36 @@ if "Efficiency Score" in data.columns and data["Efficiency Score"].isnull().all(
     data.drop(columns=["Efficiency Score"], inplace=True)
 
 # ---------- GLOBAL SEARCH ----------
-st.markdown("### 🔍 Global Search")
-search_term = st.text_input("Search all columns for keyword:")
-if search_term:
-    search_term = search_term.lower()
-    filtered = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
-    st.success(f"Found {len(filtered)} matching rows.")
-else:
-    filtered = data
-
-# ---------- FILTER CONTROLS ----------
 with st.container():
+    st.markdown("### 🔍 Global Search")
+    search_term = st.text_input("Type any keyword (well, state, date, value...) to search all columns:")
+    if search_term:
+        search_term = search_term.lower()
+        filtered = data[data.apply(lambda row: row.astype(str).str.lower().str.contains(search_term).any(), axis=1)]
+        st.success(f"🔎 Showing {len(filtered)} matching records")
+    else:
+        filtered = data
+
+# ---------- FILTER BAR ----------
+with st.container():
+    st.markdown("### 🎛️ Filter by Key Dimensions")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        selected_operator = st.selectbox("Select Operator", ["All"] + sorted(data["Operator"].dropna().unique().tolist()))
+        selected_operator = st.selectbox("Operator", ["All"] + sorted(data["Operator"].dropna().unique().tolist()))
     with col2:
         filtered_by_op = data if selected_operator == "All" else data[data["Operator"] == selected_operator]
-        selected_contractor = st.selectbox("Select Contractor", ["All"] + sorted(filtered_by_op["Contractor"].dropna().unique().tolist()))
+        selected_contractor = st.selectbox("Contractor", ["All"] + sorted(filtered_by_op["Contractor"].dropna().unique().tolist()))
     with col3:
         filtered_by_contractor = filtered_by_op if selected_contractor == "All" else filtered_by_op[filtered_by_op["Contractor"] == selected_contractor]
-        selected_shaker = st.selectbox("Select Shaker", ["All"] + sorted(filtered_by_contractor["flowline_Shakers"].dropna().unique().tolist()))
+        selected_shaker = st.selectbox("Shaker", ["All"] + sorted(filtered_by_contractor["flowline_Shakers"].dropna().unique().tolist()))
     with col4:
         filtered_by_shaker = filtered_by_contractor if selected_shaker == "All" else filtered_by_contractor[filtered_by_contractor["flowline_Shakers"] == selected_shaker]
-        selected_hole = st.selectbox("Select Hole Size", ["All"] + sorted(filtered_by_shaker["Hole_Size"].dropna().unique().tolist()))
+        selected_hole = st.selectbox("Hole Size", ["All"] + sorted(filtered_by_shaker["Hole_Size"].dropna().unique().tolist()))
 
     filtered = filtered_by_shaker if selected_hole == "All" else filtered_by_shaker[filtered_by_shaker["Hole_Size"] == selected_hole]
 
-# ---------- METRICS ----------
-st.markdown("### 📈 Key Performance Metrics")
+# ---------- METRICS SECTION ----------
+st.markdown("### 📊 Key Metrics")
 m1, m2, m3 = st.columns(3)
 with m1:
     st.metric("Avg Total Dilution", f"{filtered['Total_Dil'].mean():,.2f} BBLs")
@@ -48,7 +53,7 @@ with m2:
 with m3:
     st.metric("Avg DSRE", f"{filtered['DSRE'].mean()*100:.1f}%")
 
-# ---------- MAIN TABS ----------
+# ---------- TABS ----------
 tabs = st.tabs([
     "🧾 Well Overview", 
     "📋 Summary & Charts", 
@@ -58,37 +63,34 @@ tabs = st.tabs([
     "⚙️ Advanced Tab"
 ])
 
-# ---------- ADVANCED FILTERS TAB ----------
+# ---------- TAB 6: ADVANCED FILTERS ----------
 with tabs[5]:
-    with st.expander("📌 Use advanced filters to refine your dataset", expanded=True):
-        st.markdown("### 🧮 Advanced Filters")
+    st.markdown("### ⚙️ Advanced Filters")
+    st.info("Use sliders and date input to drill down on specific performance parameters.")
+    col1, col2 = st.columns(2)
+    with col1:
+        if "IntLength" in data.columns:
+            min_val, max_val = int(data["IntLength"].min()), int(data["IntLength"].max())
+            int_range = st.slider("Interval Length", min_val, max_val, (min_val, max_val))
+            filtered = filtered[(filtered["IntLength"] >= int_range[0]) & (filtered["IntLength"] <= int_range[1])]
+        if "AMW" in data.columns:
+            min_amw, max_amw = float(data["AMW"].min()), float(data["AMW"].max())
+            amw_range = st.slider("Average Mud Weight (AMW)", min_amw, max_amw, (min_amw, max_amw))
+            filtered = filtered[(filtered["AMW"] >= amw_range[0]) & (filtered["AMW"] <= amw_range[1])]
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if "IntLength" in data.columns:
-                min_val, max_val = int(data["IntLength"].min()), int(data["IntLength"].max())
-                int_range = st.slider("Interval Length", min_val, max_val, (min_val, max_val))
-                filtered = filtered[(filtered["IntLength"] >= int_range[0]) & (filtered["IntLength"] <= int_range[1])]
+    with col2:
+        if "Average_LGS%" in data.columns:
+            lgs_min, lgs_max = float(data["Average_LGS%"].min()), float(data["Average_LGS%"].max())
+            lgs_range = st.slider("Average LGS%", lgs_min, lgs_max, (lgs_min, lgs_max))
+            filtered = filtered[(filtered["Average_LGS%"] >= lgs_range[0]) & (filtered["Average_LGS%"] <= lgs_range[1])]
+        if "TD_Date" in data.columns:
+            data["TD_Date"] = pd.to_datetime(data["TD_Date"], errors='coerce')
+            td_min, td_max = data["TD_Date"].min(), data["TD_Date"].max()
+            td_range = st.date_input("TD Date Range", (td_min, td_max))
+            filtered = filtered[(data["TD_Date"] >= pd.to_datetime(td_range[0])) & (data["TD_Date"] <= pd.to_datetime(td_range[1]))]
 
-            if "AMW" in data.columns:
-                min_amw, max_amw = float(data["AMW"].min()), float(data["AMW"].max())
-                amw_range = st.slider("Average Mud Weight (AMW)", min_amw, max_amw, (min_amw, max_amw))
-                filtered = filtered[(filtered["AMW"] >= amw_range[0]) & (filtered["AMW"] <= amw_range[1])]
-
-        with col2:
-            if "Average_LGS%" in data.columns:
-                lgs_min, lgs_max = float(data["Average_LGS%"].min()), float(data["Average_LGS%"].max())
-                lgs_range = st.slider("Average LGS%", lgs_min, lgs_max, (lgs_min, lgs_max))
-                filtered = filtered[(filtered["Average_LGS%"] >= lgs_range[0]) & (filtered["Average_LGS%"] <= lgs_range[1])]
-
-            if "TD_Date" in data.columns:
-                data["TD_Date"] = pd.to_datetime(data["TD_Date"], errors='coerce')
-                td_min, td_max = data["TD_Date"].min(), data["TD_Date"].max()
-                td_range = st.date_input("TD Date Range", (td_min, td_max))
-                filtered = filtered[(data["TD_Date"] >= pd.to_datetime(td_range[0])) & (data["TD_Date"] <= pd.to_datetime(td_range[1]))]
-
-        st.markdown("Filtered results after applying advanced filters:")
-        st.dataframe(filtered)
+    st.markdown("### 🔍 Preview Filtered Results")
+    st.dataframe(filtered)
 
 # ---------- FOOTER ----------
 st.markdown("""
@@ -96,8 +98,6 @@ st.markdown("""
     &copy; 2025 Derrick Corp | Designed for drilling performance insights
 </div>
 """, unsafe_allow_html=True)
-
-
 
 
 # ---------- TAB 1: WELL OVERVIEW ----------
